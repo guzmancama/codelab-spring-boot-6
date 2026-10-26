@@ -163,15 +163,16 @@ class ClienteRestControllerTest {
     }
 
     @Test
-    @DisplayName("POST /clientes sin región → 400")
-    void crearCliente_sinRegion_debeRetornar400() throws Exception {
+    @DisplayName("POST /clientes sin región → 201 (el servicio asigna la región por defecto)")
+    void crearCliente_sinRegion_debeRetornar201() throws Exception {
         cliente.setRegion(null);
+        when(clienteService.save(any(Cliente.class))).thenReturn(cliente);
 
         mockMvc.perform(post(BASE + "/clientes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(cliente)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors", hasItem(containsString("region"))));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nombre").value("Ada"));
     }
 
     @Test

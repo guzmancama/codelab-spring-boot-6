@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -41,6 +42,10 @@ public class ClienteServiceImpl implements IClienteService {
     @Override
     @Transactional
     public Cliente save(Cliente cliente) {
+        // Sin región en el JSON → la de menor id (las regiones base las garantiza RegionInicialRunner)
+        if (cliente.getRegion() == null) {
+            cliente.setRegion(regionPorDefecto());
+        }
         try {
             return clienteDao.save(cliente);
         } catch (DataIntegrityViolationException ex) {
@@ -60,7 +65,10 @@ public class ClienteServiceImpl implements IClienteService {
         actual.setApellido(cliente.getApellido());
         actual.setEmail(cliente.getEmail());
         actual.setFoto(cliente.getFoto());
-        actual.setRegion(cliente.getRegion());
+        // Sin región en el JSON → se conserva la que ya tenía
+        if (cliente.getRegion() != null) {
+            actual.setRegion(cliente.getRegion());
+        }
         try {
             // saveAndFlush (en vez de save) fuerza el UPDATE aquí mismo: así una
             // violación de restricción (email duplicado) se captura en este
@@ -87,5 +95,11 @@ public class ClienteServiceImpl implements IClienteService {
     @Transactional(readOnly = true)
     public List<Region> findAllRegiones() {
         return clienteDao.findAllRegiones();
+    }
+
+    private Region regionPorDefecto() {
+        return clienteDao.findAllRegiones().stream()
+                .min(Comparator.comparing(Region::getId))
+                .orElse(null);
     }
 }

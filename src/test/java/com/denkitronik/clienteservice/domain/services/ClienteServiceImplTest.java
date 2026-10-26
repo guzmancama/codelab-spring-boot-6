@@ -118,6 +118,33 @@ class ClienteServiceImplTest {
     }
 
     @Test
+    @DisplayName("save — sin región → asigna la región de menor id")
+    void save_sinRegion_debeAsignarRegionPorDefecto() {
+        Region otra = new Region();
+        otra.setId(2L);
+        otra.setNombre("Centroamérica");
+        cliente.setRegion(null);
+        when(clienteDao.findAllRegiones()).thenReturn(List.of(otra, region));
+        when(clienteDao.save(cliente)).thenReturn(cliente);
+
+        Cliente resultado = clienteService.save(cliente);
+
+        assertThat(resultado.getRegion()).isSameAs(region);
+    }
+
+    @Test
+    @DisplayName("save — sin región y sin regiones en la BD → se guarda sin región")
+    void save_sinRegionNiRegiones_debeGuardarSinRegion() {
+        cliente.setRegion(null);
+        when(clienteDao.findAllRegiones()).thenReturn(List.of());
+        when(clienteDao.save(cliente)).thenReturn(cliente);
+
+        Cliente resultado = clienteService.save(cliente);
+
+        assertThat(resultado.getRegion()).isNull();
+    }
+
+    @Test
     @DisplayName("save — email duplicado → lanza ClienteServiceException")
     void save_emailDuplicado_debeLanzarClienteServiceException() {
         // Arrange: simulamos que la BD rechaza por email duplicado
@@ -157,6 +184,22 @@ class ClienteServiceImplTest {
         assertThat(resultado.getFoto()).isEqualTo("linus2.jpg");
         verify(clienteDao, times(1)).findById(1L);
         verify(clienteDao, times(1)).saveAndFlush(any(Cliente.class));
+    }
+
+    @Test
+    @DisplayName("update — sin región → conserva la región actual")
+    void update_sinRegion_debeConservarRegionActual() {
+        Cliente datosNuevos = new Cliente();
+        datosNuevos.setNombre("Linus");
+        datosNuevos.setApellido("Torvalds");
+        datosNuevos.setEmail("linus@kernel.org");
+
+        when(clienteDao.findById(1L)).thenReturn(Optional.of(cliente));
+        when(clienteDao.saveAndFlush(any(Cliente.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Cliente resultado = clienteService.update(1L, datosNuevos);
+
+        assertThat(resultado.getRegion()).isSameAs(region);
     }
 
     @Test

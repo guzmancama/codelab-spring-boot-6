@@ -36,7 +36,7 @@ public class Cliente {
 
     private String foto;
 
-    @NotNull(message = "La región es obligatoria")
+    // Opcional en el JSON: si no llega, ClienteServiceImpl asigna la región por defecto
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "region_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
